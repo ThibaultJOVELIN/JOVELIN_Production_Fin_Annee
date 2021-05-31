@@ -1,0 +1,410 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>Titre</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.50.1/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>x
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 896,
+    height: 448,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 550 },
+            debug: true
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var peutAttaquer = false
+var sword
+var stars;
+var bombs;
+var platforms;
+var cursors;
+var score = 0;
+var gameOver = false;
+var scoreText;
+var keyA;
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('background', 'assets/background.png');
+    this.load.image('ground', 'assets/Sol.png');
+    this.load.image('wall', 'assets/Mur.png');
+    this.load.image('star', 'assets/star.png');
+    this.load.image('bomb', 'assets/bomb.png');
+    this.load.image('Fond', 'assets/Background.png')
+    this.load.spritesheet('Heros', 'assets/PersonnageAnimationPNG.png', { frameWidth: 49, frameHeight: 71 });
+    this.load.image('sword', 'assets/Sword.png');
+
+    // Interface In Game
+
+    this.load.image('Background_Key', 'assets/Fond_cle.png');
+    this.load.spritesheet('Vie', 'assets/Points_De_Vie.png', { frameWidth: 94, frameHeight: 95 });
+    this.load.spritesheet('Monney', 'assets/Pierres_Precieuses.png', { frameWidth: 74, frameHeight: 87});
+    this.load.spritesheet('Cold', 'assets/Jauge_Froid.png', { frameWidth: 60, frameHeight: 178});
+    this.load.spritesheet('Stone', 'assets/Pierre_Lune.png', { frameWidth: 132, frameHeight: 68});
+    this.load.spritesheet('KeyPart1', 'assets/Cle_Partie_1.png', { frameWidth: 34, frameHeight: 54});
+    this.load.spritesheet('KeyPart2', 'assets/Cle_Partie_2.png', { frameWidth: 34, frameHeight: 72});
+    this.load.spritesheet('KeyPart3', 'assets/Cle_Partie_3.png', { frameWidth: 38, frameHeight: 60});
+
+    //  Input Events
+    cursors = this.input.keyboard.createCursorKeys();
+    keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    
+}
+
+function create ()
+{
+    //  A simple background for our game
+
+    this.add.image(0, 0, 'Fond');
+    this.add.image(820,105,'Background_Key').setScrollFactor(0);
+    this.coeur = this.add.sprite(75,65,'Vie').setScrollFactor(0);
+    this.monney = this.add.sprite(176,61,'Monney').setScrollFactor(0);
+    this.cold = this.add.sprite(75,215,'Cold').setScrollFactor(0);
+    this.stone = this.add.sprite(300,65,'Stone').setScrollFactor(0);
+
+    // Clé
+
+    this.key1 = this.add.sprite(800,73,'KeyPart1').setScrollFactor(0);
+    this.key2 = this.add.sprite(840,82,'KeyPart2').setScrollFactor(0);
+    this.key3 = this.add.sprite(828 ,136,'KeyPart3').setScrollFactor(0);
+
+    //  The platforms group contains the ground and the 2 ledges we can jump on
+    platforms = this.physics.add.staticGroup();
+    wall = this.physics.add.staticGroup();
+
+    //  Here we create the ground.
+    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
+    platforms.create(100, 200, 'ground');
+
+    //  Now let's create some ledges
+    platforms.create(200, 400, 'ground');
+    platforms.create(400, 400, 'ground');
+    platforms.create(300, 400, 'ground');
+    platforms.create(475, 400, 'ground');
+
+    platforms.create(600, 600, 'ground');
+    platforms.create(700, 600, 'ground');
+    platforms.create(500, 600, 'ground');
+    platforms.create(400, 600, 'ground');
+    platforms.create(300, 550, 'ground');
+    platforms.create(200, 550, 'ground');
+    platforms.create(100, 550, 'ground');
+  
+    platforms.create(825, 475, 'ground');
+
+    platforms.create(650, 250, 'ground');
+    platforms.create(600, 250, 'ground');
+    wall.create(625, 400, 'wall');
+    wall.create(625, 300, 'wall');
+
+
+    // The .player and its settings
+    player = this.physics.add.sprite(100,100, 'Heros');
+
+    sword = this.physics.add.group();
+
+
+    //  .player physics properties. Give the little guy a slight bounce.
+    player.setBounce(0);
+    player.setCollideWorldBounds(true);
+
+    //  Our .player animations, turning, walking left and walking right.
+
+    this.anims.create({
+        key: 'normal',
+        frames: [ { key: 'Heros', frame: 10 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('Heros', { start: 11, end: 16 }),
+        frameRate: 10,
+        repeat: 1
+    });
+
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('Heros', { start: 4, end: 9 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'rightjump',
+        frames: this.anims.generateFrameNumbers('Heros', { start: 17, end: 19 }),
+        frameRate: 3,
+        repeat: 1
+    });
+
+    this.anims.create({
+        key: 'leftjump',
+        frames: this.anims.generateFrameNumbers('Heros', { start: 1, end: 3 }),
+        frameRate: 3,
+        repeat: -1
+    });
+
+    // Animations d'attaques
+    this.anims.create({
+        key: 'AttackRight',
+        frames: [ { key: 'Heros', frame: 20 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'AttackLeft',
+        frames: [ { key: 'Heros', frame: 0 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'Vie4',
+        frames: [ { key: 'Vie', frame: 0 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Vie3',
+        frames: [ { key: 'Vie', frame: 1 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Vie2',
+        frames: [ { key: 'Vie', frame: 2 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Vie1',
+        frames: [ { key: 'Vie', frame: 3 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Vie0',
+        frames: [ { key: 'Vie', frame: 4 } ],
+        frameRate: 20
+    });
+
+    // Animations Epée
+    /*
+    this.anims.create({
+        key: 'SwordLeft',
+        frames: [ { key: 'Sword', frame: 0 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'SwordRight',
+        frames: [ { key: 'Sword', frame: 1 } ],
+        frameRate: 20
+    });
+    */
+
+
+
+    this.life = 4;
+
+    
+
+    //  Some stars to collect, 12 in total, evenly spaced 70 pixels apart along the x axis
+    stars = this.physics.add.group({
+        key: 'star',
+        repeat: 11,
+        setXY: { x: 12, y: 0, stepX: 70 }
+    });
+
+    stars.children.iterate(function (child) {
+
+        //  Give each star a slightly different bounce
+        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+
+    });
+
+    bombs = this.physics.add.group();
+
+    //  The score
+    scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+
+    //  Collide the .player and the stars with the platforms
+    this.physics.add.collider(player, platforms);
+    this.physics.add.collider(player, wall);
+    this.physics.add.collider(stars, platforms);
+    this.physics.add.collider(bombs, platforms);
+
+    //  Checks to see if the .player overlaps with any of the stars, if he does call the collectStar function
+    this.physics.add.overlap(player, stars, collectStar, null, );
+
+    this.cameras.main.startFollow(player)
+
+    
+}
+
+function update (t, dt)
+{
+    if (gameOver)
+    {
+        return;
+    }
+
+    this.coeur.anims.play('Vie4',true)
+
+    const touchingDown = player.body.touching.down
+    player.direction = 'right';
+
+    if (cursors.left.isDown && touchingDown)
+    {
+        player.direction = 'left';
+        player.setVelocityX(-160);
+
+        player.anims.play('left', true);
+    }
+    else if (cursors.right.isDown && touchingDown)
+    {
+        player.direction = 'right';
+        player.setVelocityX(160);
+
+        player.anims.play('right', true);
+    }
+    
+    else if (cursors.up.isDown && touchingDown)
+    {
+        player.setVelocityY(-450);
+        player.anims.play('jump');
+    }
+
+    else if (cursors.right.isDown && !touchingDown)
+    {
+        player.setVelocityX(160);
+        player.anims.play('rightjump', true);
+    }
+
+    else if (cursors.left.isDown && !touchingDown)
+    {
+    	player.setVelocityX(-160);
+    	player.anims.play('leftjump', true);
+    }
+
+    else
+    {
+        player.setVelocityX(0);
+
+        player.anims.play('normal');
+    }
+
+    // Attaques
+        
+    if (keyA.isDown && cursors.right.isDown)
+    {
+        player.anims.play('AttackRight');
+
+		attaquer(player);
+    }
+
+    else if (keyA.isDown && cursors.left.isDown)
+    {
+        player.anims.play('AttackLeft');
+        
+		attaquer(player);
+    }
+
+    else if (keyA.isDown)
+    {
+        player.anims.play('AttackRight');
+        
+		attaquer(player);
+    }
+
+}
+
+function attaquer(player) {
+
+
+    var coefDirx = 0;
+    var left = false;
+    var right = false;
+    if (player.direction == 'left') { coefDirx = -1; left = true} 
+    else if(player.direction == 'right') { coefDirx = 1; right = true } 
+	else{coefDirx = 0}
+
+    var sword = this.sword.create(player.x + (35 * coefDirx), player.y  , 'sword');
+    sword.setVelocityY(0);
+    if (left == true) {sword.setFlipX(true)}
+    
+    
+}
+function collectStar (player, star)
+{
+    star.disableBody(true, true);
+
+    //  Add and update the score
+    score += 10;
+    scoreText.setText('Score: ' + score);
+
+    if (stars.countActive(true) === 0)
+    {
+        //  A new batch of stars to collect
+        stars.children.iterate(function (child) {
+
+            child.enableBody(true, child.x, 0, true, true);
+
+        });
+
+        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+        var bomb = bombs.create(x, 16, 'bomb');
+        bomb.setBounce(1);
+        bomb.setCollideWorldBounds(true);
+        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        bomb.allowGravity = false;
+
+    }
+}
+
+function hitBomb (player, bomb)
+{
+    this.coeur.anims.play('Vie4',false)
+    this.life -= 1
+    if (this.life == 3){
+        this.coeur.anims.play('Vie3',true)
+    }
+    if (this.life == 2){
+        this.coeur.anims.play('Vie3',false)
+        this.coeur.anims.play('Vie2',true)
+    }
+    if (this.life == 1){
+        this.coeur.anims.play('Vie2',false)
+        this.coeur.anims.play('Vie1',true)
+    }
+    if (this.life == 0){
+        this.coeur.anims.play('Vie1',false)
+        this.coeur.anims.play('Vie0',true)
+        gameOver = true;
+    }
+
+   
+}
+
+</script>
+
+</body>
+</html>
