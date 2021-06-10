@@ -47,14 +47,24 @@ var game = new Phaser.Game(config);
 
 function preload ()
 {
+
+    //Map
+
+    this.load.image('Tiles', 'Tuiles.png');
+    this.load.tilemapTiledJSON('Map', 'MapSave.json');
+
+    // Poubelle
+
     this.load.image('background', 'assets/background.png');
     this.load.image('ground', 'assets/Sol.png');
     this.load.image('wall', 'assets/Mur.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
-    this.load.image('Fond', 'assets/Background.png')
+
+    // Personnage
+
     this.load.spritesheet('Heros', 'assets/PersonnageAnimationPNG.png', { frameWidth: 49, frameHeight: 71 });
-    this.load.image('sword', 'assets/Sword.png');
+    // this.load.image('sword', 'assets/Sword.png');
 
     // Interface In Game
 
@@ -66,29 +76,43 @@ function preload ()
     this.load.spritesheet('KeyPart1', 'assets/Cle_Partie_1.png', { frameWidth: 54, frameHeight: 32});
     this.load.spritesheet('KeyPart2', 'assets/Cle_Partie_2.png', { frameWidth: 72, frameHeight: 34});
     this.load.spritesheet('KeyPart3', 'assets/Cle_Partie_3.png', { frameWidth: 60, frameHeight: 38});
-
-    //  Input Events
-    cursors = this.input.keyboard.createCursorKeys();
-    keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     
 }
 
-function create ()
-{
-    //  A simple background for our game
+function create (){
 
-    this.add.image(0, 0, 'Fond');
+    // Création de la map
+
+    let Map = this.make.tilemap({ key: 'Map' });
+    let Tileset = Map.addTilesetImage('Tuiles', 'Tiles');
+
+    this.B3 = Map.createLayer('Background3', Tileset, 0, 0).setDepth(-3);
+    this.B2 = Map.createLayer('Background2', Tileset, 0, 0).setDepth(-2);
+    this.B1 = Map.createLayer('Background1', Tileset, 0, 0).setDepth(-1);
+    groundLayer = Map.createLayer('L1', Tileset, 0, 0).setDepth(0);
+    this.L2 = Map.createLayer('L2', Tileset, 0, 0).setDepth(1);
+    this.L3 = Map.createLayer('L3', Tileset, 0, 0).setDepth(2);
+    
+    // Création des touches
+
+    this.cursors = this.input.keyboard.createCursorKeys();
+    keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    this.cursorSp = this.input.keyboard.addKey('SPACE');
+    this.hp = 4;
+
+    // Création de l'interface 
+
     this.coeur = this.add.sprite(50,50,'Vie').setScrollFactor(0);
     this.monney = this.add.sprite(50,255,'Monney').setScrollFactor(0);
     this.cold = this.add.sprite(50,149,'Cold').setScrollFactor(0);
     this.stone = this.add.sprite(50,313,'Stone').setScrollFactor(0);
 
-    // Clé
+        // Clé
 
-    this.add.image(177,65,'Background_Key').setScrollFactor(0);
-    this.key1 = this.add.sprite(145,86,'KeyPart1').setScrollFactor(0);
-    this.key2 = this.add.sprite(153,46,'KeyPart2').setScrollFactor(0);
-    this.key3 = this.add.sprite(206,58,'KeyPart3').setScrollFactor(0);
+        this.add.image(177,65,'Background_Key').setScrollFactor(0);
+        this.key1 = this.add.sprite(145,86,'KeyPart1').setScrollFactor(0);
+        this.key2 = this.add.sprite(153,46,'KeyPart2').setScrollFactor(0);
+        this.key3 = this.add.sprite(206,58,'KeyPart3').setScrollFactor(0);
 
     //  The platforms group contains the ground and the 2 ledges we can jump on
     platforms = this.physics.add.staticGroup();
@@ -98,35 +122,13 @@ function create ()
     //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
     platforms.create(100, 200, 'ground');
 
-    //  Now let's create some ledges
-    platforms.create(200, 400, 'ground');
-    platforms.create(400, 400, 'ground');
-    platforms.create(300, 400, 'ground');
-    platforms.create(475, 400, 'ground');
-
-    platforms.create(600, 600, 'ground');
-    platforms.create(700, 600, 'ground');
-    platforms.create(500, 600, 'ground');
-    platforms.create(400, 600, 'ground');
-    platforms.create(300, 550, 'ground');
-    platforms.create(200, 550, 'ground');
-    platforms.create(100, 550, 'ground');
-  
-    platforms.create(825, 475, 'ground');
-
-    platforms.create(650, 250, 'ground');
-    platforms.create(600, 250, 'ground');
-    wall.create(625, 400, 'wall');
-    wall.create(625, 300, 'wall');
-
-
     // The .player and its settings
-    player = this.physics.add.sprite(100,100, 'Heros');
 
+    player = this.physics.add.sprite(100,100, 'Heros');
     sword = this.physics.add.group();
 
-
     //  .player physics properties. Give the little guy a slight bounce.
+    
     player.setBounce(0);
     player.setCollideWorldBounds(true);
 
@@ -220,11 +222,7 @@ function create ()
     });
     */
 
-
-
     this.life = 4;
-
-    
 
     //  Some stars to collect, 12 in total, evenly spaced 70 pixels apart along the x axis
     stars = this.physics.add.group({
@@ -252,15 +250,24 @@ function create ()
     this.physics.add.collider(bombs, platforms);
 
     //  Checks to see if the .player overlaps with any of the stars, if he does call the collectStar function
-    this.physics.add.overlap(player, stars, collectStar, null, );
+    this.physics.add.overlap(player, stars, collectStar, null);
+
+    // Camera
 
     this.cameras.main.startFollow(player)
+	this.cameras.main.setBounds(0,0,Map.widthInPixels, Map.heightInPixels);
+    this.physics.world.setBounds(0,0, Map.widthInPixels, Map.heightInPixels);
+	player.setCollideWorldBounds(true);
 
-    
+    // Création des collisions
+
+    groundLayer.setCollisionByProperty({ Collisions: true });
+    this.physics.add.collider(player, groundLayer);
+
 }
 
-function update (t, dt)
-{
+function update (t, dt){
+
     if (gameOver)
     {
         return;
@@ -271,14 +278,14 @@ function update (t, dt)
     const touchingDown = player.body.touching.down
     player.direction = 'right';
 
-    if (cursors.left.isDown && touchingDown)
+    if (this.cursors.left.isDown && touchingDown)
     {
         player.direction = 'left';
         player.setVelocityX(-160);
 
         player.anims.play('left', true);
     }
-    else if (cursors.right.isDown && touchingDown)
+    else if (this.cursors.right.isDown && touchingDown)
     {
         player.direction = 'right';
         player.setVelocityX(160);
@@ -286,19 +293,19 @@ function update (t, dt)
         player.anims.play('right', true);
     }
     
-    else if (cursors.up.isDown && touchingDown)
+    else if (this.cursors.up.isDown && touchingDown)
     {
         player.setVelocityY(-450);
         player.anims.play('jump');
     }
 
-    else if (cursors.right.isDown && !touchingDown)
+    else if (this.cursors.right.isDown && !touchingDown)
     {
         player.setVelocityX(160);
         player.anims.play('rightjump', true);
     }
 
-    else if (cursors.left.isDown && !touchingDown)
+    else if (this.cursors.left.isDown && !touchingDown)
     {
     	player.setVelocityX(-160);
     	player.anims.play('leftjump', true);
@@ -313,14 +320,14 @@ function update (t, dt)
 
     // Attaques
         
-    if (keyA.isDown && cursors.right.isDown)
+    if (keyA.isDown && this.cursors.right.isDown)
     {
         player.anims.play('AttackRight');
 
 		attaquer(player);
     }
 
-    else if (keyA.isDown && cursors.left.isDown)
+    else if (keyA.isDown && this.cursors.left.isDown)
     {
         player.anims.play('AttackLeft');
         
@@ -337,7 +344,6 @@ function update (t, dt)
 }
 
 function attaquer(player) {
-
 
     var coefDirx = 0;
     var left = false;
