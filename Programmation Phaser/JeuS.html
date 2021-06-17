@@ -42,98 +42,157 @@ var score = 0;
 var gameOver = false;
 var scoreText;
 var keyA;
+var keyE;
+this.jumpCount = 0;
+this.test = true;
+
+// ITEMS
+// Clé
+var KeyPart1
+var KeyPart2
+var KeyPart3
+
+// Pierres
+var MoonStone
+var RedStone
 
 var game = new Phaser.Game(config);
+
+//-------------------- FONCTION PRELOAD --------------------//
 
 function preload ()
 {
 
-    //Map
-
+    //Maps
     this.load.image('Tiles', 'Tuiles.png');
-    this.load.tilemapTiledJSON('Map', 'MapSave.json');
+    this.load.image('Tiles2', 'Tuiles2.png');
+    this.load.image('Tiles3', 'Tuiles3.png');
 
-    // Poubelle
-
-    this.load.image('background', 'assets/background.png');
-    this.load.image('ground', 'assets/Sol.png');
-    this.load.image('wall', 'assets/Mur.png');
-    this.load.image('star', 'assets/star.png');
-    this.load.image('bomb', 'assets/bomb.png');
+    this.load.tilemapTiledJSON('Map', 'Map.json');
+    this.load.tilemapTiledJSON('Map2', 'Map2.json');
+    this.load.tilemapTiledJSON('Map3', 'Map3.json');
 
     // Personnage
-
     this.load.spritesheet('Heros', 'assets/PersonnageAnimationPNG.png', { frameWidth: 49, frameHeight: 71 });
     // this.load.image('sword', 'assets/Sword.png');
 
-    // Interface In Game
+    // Elements de jeu et items
+    this.load.spritesheet('Door', 'assets/Porte.png', { frameWidth: 64, frameHeight: 96});
+    this.load.image('KeyP1Item', 'assets/Cle_Partie1_Item.png');
+    this.load.image('KeyP2Item', 'assets/Cle_Partie2_Item.png');
+    this.load.image('KeyP3Item', 'assets/Cle_Partie3_Item.png');
+    this.load.image('RedStone', 'assets/Pierre_Precieuse_Item.png');
+    this.load.image('MoonStone', 'assets/Pierre_Lune_Item.png');
+    this.load.image('Potion', 'assets/Potion_Item.png');
 
+    // Interface In Game
     this.load.image('Background_Key', 'assets/Fond_cle.png');
     this.load.spritesheet('Vie', 'assets/Points_De_Vie.png', { frameWidth: 62, frameHeight: 60 });
     this.load.spritesheet('Monney', 'assets/Pierres_Precieuses.png', { frameWidth: 73, frameHeight: 45});
     this.load.spritesheet('Cold', 'assets/Jauge_Froid.png', { frameWidth: 40, frameHeight: 138});
     this.load.spritesheet('Stone', 'assets/Pierre_Lune.png', { frameWidth: 78, frameHeight: 51});
-    this.load.spritesheet('KeyPart1', 'assets/Cle_Partie_1.png', { frameWidth: 54, frameHeight: 32});
+    this.load.spritesheet('KeyPart1', 'assets/Cle_Partie_1.png', { frameWidth: 54, frameHeight: 35});
     this.load.spritesheet('KeyPart2', 'assets/Cle_Partie_2.png', { frameWidth: 72, frameHeight: 34});
-    this.load.spritesheet('KeyPart3', 'assets/Cle_Partie_3.png', { frameWidth: 60, frameHeight: 38});
+    this.load.spritesheet('KeyPart3', 'assets/Cle_Partie_3.png', { frameWidth: 60, frameHeight: 41});
     
 }
 
+//-------------------- FONCTION CREATE --------------------//
+
 function create (){
+    BoostActivated = false;
+    unlock = false;
+    KeyInventory = 0;
+    MoonStone = 0;
+    MSInventory = 0;
+    RedStone = 0;
+    RSInventory = 0;
+    test = true;
+    speed = 190;
 
-    // Création de la map
-
+    // Création de la première map
     let Map = this.make.tilemap({ key: 'Map' });
     let Tileset = Map.addTilesetImage('Tuiles', 'Tiles');
 
-    this.B3 = Map.createLayer('Background3', Tileset, 0, 0).setDepth(-3);
-    this.B2 = Map.createLayer('Background2', Tileset, 0, 0).setDepth(-2);
-    this.B1 = Map.createLayer('Background1', Tileset, 0, 0).setDepth(-1);
+    this.B3 = Map.createLayer('Background3', Tileset, 0, 0).setDepth(-5);
+    this.B2 = Map.createLayer('Background2', Tileset, 0, 0).setDepth(-4);
+    this.B1 = Map.createLayer('Background1', Tileset, 0, 0).setDepth(-3);
     groundLayer = Map.createLayer('L1', Tileset, 0, 0).setDepth(0);
-    this.L2 = Map.createLayer('L2', Tileset, 0, 0).setDepth(1);
-    this.L3 = Map.createLayer('L3', Tileset, 0, 0).setDepth(2);
+    this.L2 = Map.createLayer('L2', Tileset, 0, 0).setDepth(-2);
+    this.L3 = Map.createLayer('L3', Tileset, 0, 0).setDepth(-1);
     
-    // Création des touches
+    /* Création de la deuxième map
+    let Map2 = this.make.tilemap({ key: 'Map2' });
+    let Tileset2 = Map2.addTilesetImage('Tuiles2', 'Tiles2');
 
+    this.B3 = Map2.createLayer('Background3', Tileset, 0, 0).setDepth(-4);
+    this.B2 = Map2.createLayer('Background2', Tileset, 0, 0).setDepth(-3);
+    this.B1 = Map2.createLayer('Background1', Tileset, 0, 0).setDepth(-2);
+    groundLayer = Map2.createLayer('L1', Tileset, 0, 0).setDepth(0);
+    this.L2 = Map2.createLayer('L2', Tileset, 0, 0).setDepth(-1);
+    */
+
+    // Création des touches
     this.cursors = this.input.keyboard.createCursorKeys();
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    this.cursorSp = this.input.keyboard.addKey('SPACE');
+    keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.hp = 4;
 
     // Création de l'interface 
-
     this.coeur = this.add.sprite(50,50,'Vie').setScrollFactor(0);
     this.monney = this.add.sprite(50,255,'Monney').setScrollFactor(0);
     this.cold = this.add.sprite(50,149,'Cold').setScrollFactor(0);
     this.stone = this.add.sprite(50,313,'Stone').setScrollFactor(0);
 
         // Clé
-
         this.add.image(177,65,'Background_Key').setScrollFactor(0);
         this.key1 = this.add.sprite(145,86,'KeyPart1').setScrollFactor(0);
         this.key2 = this.add.sprite(153,46,'KeyPart2').setScrollFactor(0);
         this.key3 = this.add.sprite(206,58,'KeyPart3').setScrollFactor(0);
 
-    //  The platforms group contains the ground and the 2 ledges we can jump on
-    platforms = this.physics.add.staticGroup();
-    wall = this.physics.add.staticGroup();
-
-    //  Here we create the ground.
-    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-    platforms.create(100, 200, 'ground');
+    // Création items et obectifs
+    this.door = this.add.sprite(2750,624,'Door'); 
 
     // The .player and its settings
-
-    player = this.physics.add.sprite(100,100, 'Heros');
+    player = this.physics.add.sprite(160,669, 'Heros');
     sword = this.physics.add.group();
 
+    // Création des fragments de clé
+    keys = this.physics.add.group({allowGravity: false,immovable: true});
+
+    keys.create(500, 600, 'KeyPart1').setDepth(0);
+    keys.create(400, 600, 'KeyPart2').setDepth(0);
+    keys.create(300, 600, 'KeyPart3').setDepth(0);
+
+    this.physics.add.overlap(player, keys, collectKey, null,this);
+
+    // Création de pierres de connexion
+
+    MoonStone = this.physics.add.group({allowGravity: false,immovable: true});
+
+    MoonStone.create(600, 600, 'MoonStone').setDepth(0);
+    MoonStone.create(650, 600, 'MoonStone').setDepth(0);
+    MoonStone.create(700, 600, 'MoonStone').setDepth(0);
+    MoonStone.create(750, 600, 'MoonStone').setDepth(0);
+
+    this.physics.add.overlap(player, MoonStone, collectMoonStone, null,this);
+
+    // Création de pierres précieuses
+
+    RedStone = this.physics.add.group({allowGravity: false,immovable: true});
+
+    RedStone.create(600, 400, 'RedStone').setDepth(0);
+    RedStone.create(650, 400, 'RedStone').setDepth(0);
+    RedStone.create(700, 400, 'RedStone').setDepth(0);
+    RedStone.create(750, 400, 'RedStone').setDepth(0);
+
+    this.physics.add.overlap(player, RedStone, collectRedStone, null,this);
+
     //  .player physics properties. Give the little guy a slight bounce.
-    
     player.setBounce(0);
     player.setCollideWorldBounds(true);
 
     //  Our .player animations, turning, walking left and walking right.
-
     this.anims.create({
         key: 'normal',
         frames: [ { key: 'Heros', frame: 10 } ],
@@ -143,29 +202,33 @@ function create (){
     this.anims.create({
         key: 'right',
         frames: this.anims.generateFrameNumbers('Heros', { start: 11, end: 16 }),
-        frameRate: 10,
+        frameRate: 8,
         repeat: 1
     });
 
     this.anims.create({
         key: 'left',
         frames: this.anims.generateFrameNumbers('Heros', { start: 4, end: 9 }),
-        frameRate: 10,
+        frameRate: 8,
         repeat: -1
     });
 
     this.anims.create({
         key: 'rightjump',
-        frames: this.anims.generateFrameNumbers('Heros', { start: 17, end: 19 }),
+        frames: [ { key: 'Heros', frame: 19 } ],
         frameRate: 3,
-        repeat: 1
     });
 
     this.anims.create({
         key: 'leftjump',
-        frames: this.anims.generateFrameNumbers('Heros', { start: 1, end: 3 }),
+        frames: [ { key: 'Heros', frame: 3 } ],
         frameRate: 3,
-        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'jump',
+        frames: [ { key : 'Heros', frame: 19 }],
+        framerate: 3,
     });
 
     // Animations d'attaques
@@ -181,6 +244,7 @@ function create (){
         frameRate: 20
     });
 
+    // Interface : Vie
     this.anims.create({
         key: 'Vie4',
         frames: [ { key: 'Vie', frame: 0 } ],
@@ -207,6 +271,209 @@ function create (){
         frameRate: 20
     });
 
+    this.life = 4;
+
+    // Interface : Pierres Lune
+    this.anims.create({
+        key: 'MSI3',
+        frames: [ { key: 'Stone', frame: 3 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'MSI2',
+        frames: [ { key: 'Stone', frame: 2 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'MSI1',
+        frames: [ { key: 'Stone', frame: 1 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'MSI0',
+        frames: [ { key: 'Stone', frame: 0 } ],
+        frameRate: 20
+    });
+
+    this.MSInventory = 0;
+
+    // Interface : Pierres précieuses
+    this.anims.create({
+        key: 'RSI4',
+        frames: [ { key: 'Monney', frame: 4 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'RSI3',
+        frames: [ { key: 'Monney', frame: 3 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'RSI2',
+        frames: [ { key: 'Monney', frame: 2 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'RSI1',
+        frames: [ { key: 'Monney', frame: 1 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'RSI0',
+        frames: [ { key: 'Monney', frame: 0 } ],
+        frameRate: 20
+    });
+
+    this.RSInventory = 0;
+
+    // Interface : Thermomètre 
+    this.anims.create({
+        key: 'Froid6',
+        frames: [ { key: 'Cold', frame: 6 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Froid5',
+        frames: [ { key: 'Cold', frame: 5 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Froid4',
+        frames: [ { key: 'Cold', frame: 4 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Froid3',
+        frames: [ { key: 'Cold', frame: 3 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Froid2',
+        frames: [ { key: 'Cold', frame: 2 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Froid1',
+        frames: [ { key: 'Cold', frame: 1 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Froid',
+        frames: [ { key: 'Cold', frame: 0 } ],
+        frameRate: 20
+    });
+
+    this.froid = 6;
+
+    // Inteface : Clé 
+        // Partie 1
+        this.anims.create({
+            key: 'KeyP1.1',
+            frames: [ { key: 'KeyPart1', frame: 0 } ],
+            frameRate: 20
+        });
+        this.anims.create({
+            key: 'KeyP1.0',
+            frames: [ { key: 'KeyPart1', frame: 1 } ],
+            frameRate: 20
+        });
+
+        this.keyP1 = 0;
+
+        // Partie 2
+        this.anims.create({
+            key: 'KeyP2.1',
+            frames: [ { key: 'KeyPart2', frame: 0 } ],
+            frameRate: 20
+        });
+        this.anims.create({
+            key: 'KeyP2.0',
+            frames: [ { key: 'KeyPart2', frame: 1 } ],
+            frameRate: 20
+        });
+
+        this.keyP2 = 0;
+
+        // Partie 3
+        this.anims.create({
+            key: 'KeyP3.1',
+            frames: [ { key: 'KeyPart3', frame: 0 } ],
+            frameRate: 20
+        });
+        this.anims.create({
+            key: 'KeyP3.0',
+            frames: [ { key: 'KeyPart3', frame: 1 } ],
+            frameRate: 20
+        });
+
+        this.keyP3 = 0;
+
+    // Interface : Pierres de connexion
+    this.anims.create({
+        key: 'MSI0',
+        frames: [ { key: 'Stone', frame: 0 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'MSI1',
+        frames: [ { key: 'Stone', frame: 1 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'MSI2',
+        frames: [ { key: 'Stone', frame: 2 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'MSI3',
+        frames: [ { key: 'Stone', frame: 3 } ],
+        frameRate: 20
+    });
+
+    this.MSInventory = 0;
+
+    // Interface : Pierres précieuses
+    this.anims.create({
+        key: 'RSI0',
+        frames: [ { key: 'Monney', frame: 0 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'RSI1',
+        frames: [ { key: 'Monney', frame: 1 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'RSI2',
+        frames: [ { key: 'Monney', frame: 2 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'RSI3',
+        frames: [ { key: 'Monney', frame: 3 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'RSI4',
+        frames: [ { key: 'Monney', frame: 4 } ],
+        frameRate: 20
+    });
+
+    this.RSInventory = 0;
+
+    // Porte fin de niveau
+    this.anims.create({
+        key: 'DoorClose',
+        frames: [ { key: 'Door', frame: 0 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'DoorOpen',
+        frames: [ { key: 'Door', frame: 1 } ],
+        frameRate: 20
+    });
+
     // Animations Epée
     /*
     this.anims.create({
@@ -222,49 +489,27 @@ function create (){
     });
     */
 
-    this.life = 4;
-
-    //  Some stars to collect, 12 in total, evenly spaced 70 pixels apart along the x axis
-    stars = this.physics.add.group({
-        key: 'star',
-        repeat: 11,
-        setXY: { x: 12, y: 0, stepX: 70 }
-    });
-
-    stars.children.iterate(function (child) {
-
-        //  Give each star a slightly different bounce
-        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-
-    });
-
-    bombs = this.physics.add.group();
-
     //  The score
     scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
 
     //  Collide the .player and the stars with the platforms
     this.physics.add.collider(player, platforms);
-    this.physics.add.collider(player, wall);
-    this.physics.add.collider(stars, platforms);
-    this.physics.add.collider(bombs, platforms);
 
     //  Checks to see if the .player overlaps with any of the stars, if he does call the collectStar function
-    this.physics.add.overlap(player, stars, collectStar, null);
 
     // Camera
-
     this.cameras.main.startFollow(player)
 	this.cameras.main.setBounds(0,0,Map.widthInPixels, Map.heightInPixels);
     this.physics.world.setBounds(0,0, Map.widthInPixels, Map.heightInPixels);
 	player.setCollideWorldBounds(true);
 
     // Création des collisions
-
     groundLayer.setCollisionByProperty({ Collisions: true });
     this.physics.add.collider(player, groundLayer);
 
 }
+
+//-------------------- FONCTION UPDATE --------------------//
 
 function update (t, dt){
 
@@ -275,42 +520,72 @@ function update (t, dt){
 
     this.coeur.anims.play('Vie4',true)
 
-    const touchingDown = player.body.touching.down
+    const touchingDown = player.body.blocked.down
     player.direction = 'right';
 
+    // Déplacements du personnage
+
+    // Activer le boost
+    if (keyE.isDown && MSInventory > 0 && test){
+        test = false
+        BoostActivated = true;
+        console.log(MSInventory)
+        MSInventory -= 1
+
+        speed = 240
+        this.time.addEvent({ delay : 10000, repeat: 9, callback: function(){speed = 190;}, callbackScope: this});
+
+    }
+
+    else if (keyE.isUp){
+        test = true
+    }
+    
+    // Déplacements latéraux
     if (this.cursors.left.isDown && touchingDown)
     {
         player.direction = 'left';
-        player.setVelocityX(-160);
+        player.setVelocityX(-speed);
 
         player.anims.play('left', true);
     }
     else if (this.cursors.right.isDown && touchingDown)
     {
         player.direction = 'right';
-        player.setVelocityX(160);
+        player.setVelocityX(speed);
 
         player.anims.play('right', true);
     }
-    
-    else if (this.cursors.up.isDown && touchingDown)
-    {
-        player.setVelocityY(-450);
-        player.anims.play('jump');
+
+    else {
+
+    // Saut
+    if ((touchingDown || this.jumpCount < 2) && (this.cursors.up.isDown) && this.test) {
+        player.setVelocityY(-speed*2);
+            
+        this.test = false;
+        this.jumpCount++;
+
+        console.log(this.jumpCount)
     }
 
-    else if (this.cursors.right.isDown && !touchingDown)
+    if (this.cursors.up.isUp){
+        this.test = true ; 
+    }
+
+    if (this.cursors.right.isDown && !touchingDown)
     {
-        player.setVelocityX(160);
+        player.setVelocityX(speed);
         player.anims.play('rightjump', true);
     }
 
     else if (this.cursors.left.isDown && !touchingDown)
     {
-    	player.setVelocityX(-160);
+    	player.setVelocityX(-speed);
     	player.anims.play('leftjump', true);
     }
 
+    // Position classique
     else
     {
         player.setVelocityX(0);
@@ -318,8 +593,9 @@ function update (t, dt){
         player.anims.play('normal');
     }
 
-    // Attaques
-        
+    }
+
+    // Attaques 
     if (keyA.isDown && this.cursors.right.isDown)
     {
         player.anims.play('AttackRight');
@@ -341,9 +617,73 @@ function update (t, dt){
 		attaquer(player);
     }
 
+    // Double saut
+    if (touchingDown){
+
+        this.jumpCount = 1
+    }
+
+    // Porte
+    this.door.anims.play('DoorClose', true)
+
+    if (KeyInventory == 3)
+    {
+        this.door.anims.play('DoorOpen', true)
+    }
+        
+    // Interface : Clé
+    this.key1.anims.play('KeyP1.0', true);
+    this.key2.anims.play('KeyP2.0', true);
+    this.key3.anims.play('KeyP3.0', true);
+
+    if (KeyInventory == 1){
+        this.key1.anims.play('KeyP1.1', true);
+    }
+
+    else if (KeyInventory == 2){
+        this.key2.anims.play('KeyP2.1', true);
+        this.key1.anims.play('KeyP1.1', true);
+    }
+
+    else if (KeyInventory == 3){
+        this.key3.anims.play('KeyP3.1', true);
+        this.key2.anims.play('KeyP2.1', true);
+        this.key1.anims.play('KeyP1.1', true);
+    }
+
+    // Interface : Pierres de connexion
+    this.stone.anims.play('MSI0', true);
+
+    if (MSInventory == 1){
+        this.stone.anims.play('MSI1', true);
+    }
+    else if (MSInventory == 2){
+        this.stone.anims.play('MSI2', true);
+    }
+    else if (MSInventory == 3){
+        this.stone.anims.play('MSI3', true);
+    }
+
+    // Interface : Pierres précieuses
+    this.monney.anims.play('RSI0', true);
+
+    if (RSInventory == 1){
+        this.monney.anims.play('RSI1', true);
+    }
+    else if (RSInventory == 2){
+        this.monney.anims.play('RSI2', true);
+    }
+    else if (RSInventory == 3){
+        this.monney.anims.play('RSI3', true);
+    }
+    else if (RSInventory == 4){
+        this.monney.anims.play('RSI4', true);
+    }
+
 }
 
-function attaquer(player) {
+function attaquer(player)
+{
 
     var coefDirx = 0;
     var left = false;
@@ -355,35 +695,37 @@ function attaquer(player) {
     var sword = this.sword.create(player.x + (35 * coefDirx), player.y  , 'sword');
     sword.setVelocityY(0);
     if (left == true) {sword.setFlipX(true)}
-    
+      
+}
+
+function collectKey (player, cle)
+{
+    cle.destroy();
+    KeyInventory += 1;
+
+    if (KeyInventory == 3){
+        unlock = true;
+    }
     
 }
-function collectStar (player, star)
-{
-    star.disableBody(true, true);
 
-    //  Add and update the score
-    score += 10;
-    scoreText.setText('Score: ' + score);
+function collectMoonStone (player, MoonStone){
 
-    if (stars.countActive(true) === 0)
+    MoonStone.destroy();
+    MSInventory += 1;
+
+    if (MSInventory == 4)
     {
-        //  A new batch of stars to collect
-        stars.children.iterate(function (child) {
-
-            child.enableBody(true, child.x, 0, true, true);
-
-        });
-
-        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
-
-        var bomb = bombs.create(x, 16, 'bomb');
-        bomb.setBounce(1);
-        bomb.setCollideWorldBounds(true);
-        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-        bomb.allowGravity = false;
-
+        MSInventory = 3;
     }
+
+}
+
+function collectRedStone (player, RedStone){
+
+    RedStone.destroy();
+    RSInventory += 1;
+
 }
 
 function hitBomb (player, bomb)
@@ -406,8 +748,7 @@ function hitBomb (player, bomb)
         this.coeur.anims.play('Vie0',true)
         gameOver = true;
     }
-
-   
+  
 }
 
 </script>
