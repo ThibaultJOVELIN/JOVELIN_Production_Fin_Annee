@@ -34,15 +34,15 @@ var config = {
 
 var peutAttaquer = false
 var sword
-var stars;
-var bombs;
 var platforms;
+var movingPlatform
+var movingPlatform2
+var slime
 var cursors;
-var score = 0;
 var gameOver = false;
-var scoreText;
 var keyA;
 var keyE;
+var keyB;
 this.jumpCount = 0;
 this.test = true;
 
@@ -56,6 +56,9 @@ var KeyPart3
 var MoonStone
 var RedStone
 
+// Objectif
+var door
+
 var game = new Phaser.Game(config);
 
 //-------------------- FONCTION PRELOAD --------------------//
@@ -64,17 +67,27 @@ function preload ()
 {
 
     //Maps
-    this.load.image('Tiles', 'Tuiles.png');
-    this.load.image('Tiles2', 'Tuiles2.png');
-    this.load.image('Tiles3', 'Tuiles3.png');
-
+    this.load.image('Tiles', 'Tuiles.png'); 
     this.load.tilemapTiledJSON('Map', 'Map.json');
-    this.load.tilemapTiledJSON('Map2', 'Map2.json');
-    this.load.tilemapTiledJSON('Map3', 'Map3.json');
+
+    this.load.image('Platform', 'assets/Plateforme.png');
+    this.load.image('Water', 'assets/Water.png');
+
+    //Background
+    this.load.image('Background1', 'assets/Background_Foret.png');
+    this.load.image('Background2', 'assets/Background_Montagnes.png');
+    this.load.image('Background3', 'assets/Background_Ciel.png');
 
     // Personnage
     this.load.spritesheet('Heros', 'assets/PersonnageAnimationPNG.png', { frameWidth: 49, frameHeight: 71 });
+    this.load.spritesheet('HerosCapeR', 'assets/PersonnageAnimationPNGCapeRouge.png', { frameWidth: 49, frameHeight: 71 });
     // this.load.image('sword', 'assets/Sword.png');
+
+    //Ennemies
+    this.load.spritesheet('Chicken', 'assets/Poulet_Spritesheet.png', { frameWidth: 42, frameHeight: 47 });
+    this.load.spritesheet('Slime', 'assets/Slime_Spritesheet.png', { frameWidth: 70, frameHeight: 52 });
+    this.load.spritesheet('Bird', 'assets/Oiseau_Spritesheet.png', { frameWidth: 41, frameHeight: 41 });
+    this.load.spritesheet('Bat', 'assets/Chauve_Souris_Spritesheet.png', { frameWidth: 47, frameHeight: 27 });
 
     // Elements de jeu et items
     this.load.spritesheet('Door', 'assets/Porte.png', { frameWidth: 64, frameHeight: 96});
@@ -84,16 +97,25 @@ function preload ()
     this.load.image('RedStone', 'assets/Pierre_Precieuse_Item.png');
     this.load.image('MoonStone', 'assets/Pierre_Lune_Item.png');
     this.load.image('Potion', 'assets/Potion_Item.png');
+    this.load.image('Trader', 'assets/Marchand.png');
+    this.load.image('CapeVente', 'assets/Vente.png');
+
+    // Informations via bannières
+    this.load.image('BanniereInfo1', 'assets/BanniereInfo.png');
+    this.load.image('BanniereInfo2', 'assets/BanniereInfo2.png');
+    this.load.image('BanniereInfo3', 'assets/BanniereInfo3.png');
 
     // Interface In Game
     this.load.image('Background_Key', 'assets/Fond_cle.png');
-    this.load.spritesheet('Vie', 'assets/Points_De_Vie.png', { frameWidth: 62, frameHeight: 60 });
+    this.load.spritesheet('Life', 'assets/Points_De_Vie.png', { frameWidth: 62, frameHeight: 60 });
     this.load.spritesheet('Monney', 'assets/Pierres_Precieuses.png', { frameWidth: 73, frameHeight: 45});
     this.load.spritesheet('Cold', 'assets/Jauge_Froid.png', { frameWidth: 40, frameHeight: 138});
     this.load.spritesheet('Stone', 'assets/Pierre_Lune.png', { frameWidth: 78, frameHeight: 51});
     this.load.spritesheet('KeyPart1', 'assets/Cle_Partie_1.png', { frameWidth: 54, frameHeight: 35});
     this.load.spritesheet('KeyPart2', 'assets/Cle_Partie_2.png', { frameWidth: 72, frameHeight: 34});
     this.load.spritesheet('KeyPart3', 'assets/Cle_Partie_3.png', { frameWidth: 60, frameHeight: 41});
+
+    this.load.image('GameOver', 'assets/Ecran_GameOver.png');
     
 }
 
@@ -101,68 +123,209 @@ function preload ()
 
 function create (){
     BoostActivated = false;
+    immune = false;
     unlock = false;
+    pouletSol = true;
+    CapeR = false;
     KeyInventory = 0;
-    MoonStone = 0;
     MSInventory = 0;
-    RedStone = 0;
     RSInventory = 0;
+    Hp = 4;
     test = true;
     speed = 190;
 
-    // Création de la première map
+    
+
+    // CREATION DE LA CARTE
+
     let Map = this.make.tilemap({ key: 'Map' });
     let Tileset = Map.addTilesetImage('Tuiles', 'Tiles');
 
-    this.B3 = Map.createLayer('Background3', Tileset, 0, 0).setDepth(-5);
-    this.B2 = Map.createLayer('Background2', Tileset, 0, 0).setDepth(-4);
-    this.B1 = Map.createLayer('Background1', Tileset, 0, 0).setDepth(-3);
+    this.Liana2 = Map.createLayer('Liana2', Tileset, 0, 0).setDepth(4);
+    this.Liana1 = Map.createLayer('Liana1', Tileset, 0, 0).setDepth(3);
+    this.B1 = Map.createLayer('B1', Tileset, 0, 0).setDepth(-2);
     groundLayer = Map.createLayer('L1', Tileset, 0, 0).setDepth(0);
-    this.L2 = Map.createLayer('L2', Tileset, 0, 0).setDepth(-2);
-    this.L3 = Map.createLayer('L3', Tileset, 0, 0).setDepth(-1);
-    
-    /* Création de la deuxième map
-    let Map2 = this.make.tilemap({ key: 'Map2' });
-    let Tileset2 = Map2.addTilesetImage('Tuiles2', 'Tiles2');
+    this.W = Map.createLayer('W', Tileset, 0, 0).setDepth(1);
+    this.L2 = Map.createLayer('L2', Tileset, 0, 0).setDepth(-1);
+    this.L3 = Map.createLayer('L3', Tileset, 0, 0).setDepth(2);
+    this.Lights = Map.createLayer('Lights', Tileset, 0, 0).setDepth(5);
 
-    this.B3 = Map2.createLayer('Background3', Tileset, 0, 0).setDepth(-4);
-    this.B2 = Map2.createLayer('Background2', Tileset, 0, 0).setDepth(-3);
-    this.B1 = Map2.createLayer('Background1', Tileset, 0, 0).setDepth(-2);
-    groundLayer = Map2.createLayer('L1', Tileset, 0, 0).setDepth(0);
-    this.L2 = Map2.createLayer('L2', Tileset, 0, 0).setDepth(-1);
+    // Plateformes mobiles
+
+    movingPlatform = this.physics.add.image(2550, 960, 'Platform');
+    movingPlatform2 = this.physics.add.image(4500, 800, 'Platform');
+
+    movingPlatform.setImmovable(true);
+    movingPlatform2.setImmovable(true);
+
+    movingPlatform.body.allowGravity = false;
+    movingPlatform2.body.allowGravity = false;
+
+    movingPlatform.setVelocityX(-100);
+    movingPlatform2.setVelocityX(-100);
+    /*
+    // Eau
+    water = this.physics.add.group();
+    water.create(600, 1200, 'Water');
+    this.physics.add.overlap(player, water, null,this);
     */
+    // Création du background
+    this.add.image(2300,650,'Background1').setDepth(-4).setScrollFactor(0.95);
+    this.add.image(2300,640,'Background2').setDepth(-5).setScrollFactor(0.85);
+    this.add.image(2300,631,'Background3').setDepth(-6).setScrollFactor(0.8);
+
+    // Création des bannières d'informations
+    this.add.image(500,1240,'BanniereInfo1').setDepth(-3);
+    this.add.image(1350,1245,'BanniereInfo2').setDepth(-3);
+    this.add.image(4410,1290,'BanniereInfo3').setDepth(-3);
 
     // Création des touches
     this.cursors = this.input.keyboard.createCursorKeys();
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
-    this.hp = 4;
+    keyB = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
 
     // Création de l'interface 
-    this.coeur = this.add.sprite(50,50,'Vie').setScrollFactor(0);
-    this.monney = this.add.sprite(50,255,'Monney').setScrollFactor(0);
-    this.cold = this.add.sprite(50,149,'Cold').setScrollFactor(0);
-    this.stone = this.add.sprite(50,313,'Stone').setScrollFactor(0);
+    this.hp = this.add.sprite(50,50,'Vie').setScrollFactor(0).setDepth(6);
+    this.monney = this.add.sprite(50,255,'Monney').setScrollFactor(0).setDepth(6);
+    this.cold = this.add.sprite(50,149,'Cold').setScrollFactor(0).setDepth(6);
+    this.stone = this.add.sprite(50,313,'Stone').setScrollFactor(0).setDepth(6);
 
         // Clé
-        this.add.image(177,65,'Background_Key').setScrollFactor(0);
-        this.key1 = this.add.sprite(145,86,'KeyPart1').setScrollFactor(0);
-        this.key2 = this.add.sprite(153,46,'KeyPart2').setScrollFactor(0);
-        this.key3 = this.add.sprite(206,58,'KeyPart3').setScrollFactor(0);
+        this.add.image(177,65,'Background_Key').setScrollFactor(0).setDepth(6);
+        this.key1 = this.add.sprite(145,86,'KeyPart1').setScrollFactor(0).setDepth(6);
+        this.key2 = this.add.sprite(153,46,'KeyPart2').setScrollFactor(0).setDepth(6);
+        this.key3 = this.add.sprite(206,58,'KeyPart3').setScrollFactor(0).setDepth(6);
 
-    // Création items et obectifs
-    this.door = this.add.sprite(2750,624,'Door'); 
-
-    // The .player and its settings
-    player = this.physics.add.sprite(160,669, 'Heros');
+    // Création du personnage
+    player = this.physics.add.sprite(4110,1373, 'Heros');   //180,1309
     sword = this.physics.add.group();
+    
+    // Création Objectifs
+    door = this.physics.add.group();
+    door.create(2800,1264,'Door').setDepth(0);
+    this.physics.add.overlap(player, door, NextStage, null,this);
 
+    door2 = this.physics.add.group();
+    door2.create(800, 1200, 'Door').setDepth(0);
+    this.physics.add.overlap(player, door2, NextStage, null,this);  
+    
+    door3 = this.physics.add.group();
+    door3.create(8660,688, 'Door').setDepth(0);
+    this.physics.add.overlap(player, door3, NextStage, null,this);
+
+    this.trader = this.add.sprite(4120,1373,'Trader').setDepth(-1);
+
+    sale = this.physics.add.group();
+    sale.create(4200,1310, 'CapeVente').setDepth(-2);
+    this.physics.add.overlap(player, sale, AchatCapeR, null,this);
+
+    // CREATION DES ENNEMIES --------------------
+    // Poulet
+    // 1
+    chicken = this.physics.add.group();
+    chicken.create(3550, 1034, 'Chicken').setDepth(0);
+    this.physics.add.overlap(player, chicken, hit, null,this);
+
+    // 2
+    chicken2 = this.physics.add.group();
+    chicken2.create(7490, 1350, 'Chicken').setDepth(0);
+    this.physics.add.overlap(player, chicken2, hit, null,this);
+
+    // 3
+    chicken3 = this.physics.add.group();
+    chicken3.create(6112, 1350, 'Chicken').setDepth(0);
+    this.physics.add.overlap(player, chicken3, hit, null,this);
+
+    //Piaf
+    //1
+    bird = this.physics.add.group({allowGravity: false,immovable: true});
+    bird.create(2300, 900, 'Bird').setDepth(0);
+    this.physics.add.overlap(player, bird, hit, null,this);
+    bird.setVelocityX(-200);
+
+    //2
+    bird2 = this.physics.add.group({allowGravity: false,immovable: true});
+    bird2.create(4500, 900, 'Bird').setDepth(0);
+    this.physics.add.overlap(player, bird2, hit, null,this);
+    bird2.setVelocityX(-200);
+
+    // Slimes
+    // 1
+    slime = this.physics.add.group();
+    slime.create(2500,1222, 'Slime').setDepth(0);
+
+    var test = this;
+
+    slime.children.iterate(function (child) {
+        test.tweens.add({
+            targets: child,
+            x: 2312,
+            duration: 2000,
+            paused: false,
+            yoyo: true,
+            repeat: -1
+        });
+    });
+    this.physics.add.overlap(player, slime, hit, null,this);
+
+    // 2
+    slime2 = this.physics.add.group();
+    slime2.create(8550,300, 'Slime').setDepth(0);
+
+    var test = this;
+
+    slime2.children.iterate(function (child) {
+        test.tweens.add({
+            targets: child,
+            x: 8820,
+            duration: 2000,
+            paused: false,
+            yoyo: true,
+            repeat: -1
+        });
+    });
+
+    this.physics.add.overlap(player, slime2, hit, null,this);
+
+    //Chauve-souris
+
+    bat = this.physics.add.group({allowGravity: false,immovable: true});
+    bat.create(8900,940, 'Bat').setDepth(0);
+
+    var test = this;
+
+        bat.children.iterate(function (child) {
+            test.tweens.add({
+                targets: child,
+                x: 9140,
+                duration: 1250,
+                paused: false,
+                yoyo: true,
+                repeat: -1
+            });
+        })
+
+    this.physics.add.overlap(player, bat, hit, null,this);
+
+    // ITEMS -------------------
     // Création des fragments de clé
     keys = this.physics.add.group({allowGravity: false,immovable: true});
 
-    keys.create(500, 600, 'KeyPart1').setDepth(0);
-    keys.create(400, 600, 'KeyPart2').setDepth(0);
-    keys.create(300, 600, 'KeyPart3').setDepth(0);
+    //Level1
+    keys.create(1070, 990, 'KeyPart1').setDepth(0);
+    keys.create(1800, 930, 'KeyPart2').setDepth(0);
+    keys.create(2500, 1213, 'KeyPart3').setDepth(0);
+
+    //Level2
+    keys.create(3340, 890, 'KeyPart1').setDepth(0);
+    keys.create(4900, 985, 'KeyPart2').setDepth(0);
+    keys.create(6120, 1050, 'KeyPart3').setDepth(0);
+
+    //Level3
+    keys.create(7580, 980, 'KeyPart1').setDepth(0);
+    keys.create(8300, 185, 'KeyPart2').setDepth(0);
+    keys.create(6650, 340, 'KeyPart3').setDepth(0);
 
     this.physics.add.overlap(player, keys, collectKey, null,this);
 
@@ -170,10 +333,10 @@ function create (){
 
     MoonStone = this.physics.add.group({allowGravity: false,immovable: true});
 
-    MoonStone.create(600, 600, 'MoonStone').setDepth(0);
-    MoonStone.create(650, 600, 'MoonStone').setDepth(0);
-    MoonStone.create(700, 600, 'MoonStone').setDepth(0);
-    MoonStone.create(750, 600, 'MoonStone').setDepth(0);
+    MoonStone.create(1600, 1210, 'MoonStone').setDepth(0);
+    MoonStone.create(3410, 890, 'MoonStone').setDepth(0);
+    MoonStone.create(7555, 1310, 'MoonStone').setDepth(0);
+    MoonStone.create(7280, 220, 'MoonStone').setDepth(0);
 
     this.physics.add.overlap(player, MoonStone, collectMoonStone, null,this);
 
@@ -181,18 +344,26 @@ function create (){
 
     RedStone = this.physics.add.group({allowGravity: false,immovable: true});
 
-    RedStone.create(600, 400, 'RedStone').setDepth(0);
-    RedStone.create(650, 400, 'RedStone').setDepth(0);
-    RedStone.create(700, 400, 'RedStone').setDepth(0);
-    RedStone.create(750, 400, 'RedStone').setDepth(0);
+    RedStone.create(2970, 860, 'RedStone').setDepth(0);
+    RedStone.create(3920, 1150, 'RedStone').setDepth(0);
+    RedStone.create(4300, 700, 'RedStone').setDepth(0);
+    RedStone.create(6720, 1310, 'RedStone').setDepth(0);
 
     this.physics.add.overlap(player, RedStone, collectRedStone, null,this);
 
-    //  .player physics properties. Give the little guy a slight bounce.
+    // Potions de soin
+    Potion = this.physics.add.group({allowGravity: false,immovable: true});
+
+    Potion.create(3740, 1269, 'Potion').setDepth(0);
+    Potion.create(5670, 989, 'Potion').setDepth(0);
+    Potion.create(8650,1012, 'Potion').setDepth(0);
+
+    this.physics.add.overlap(player, Potion, heal, null,this);
+
+    // Le personnage et ses animations
     player.setBounce(0);
     player.setCollideWorldBounds(true);
 
-    //  Our .player animations, turning, walking left and walking right.
     this.anims.create({
         key: 'normal',
         frames: [ { key: 'Heros', frame: 10 } ],
@@ -244,34 +415,127 @@ function create (){
         frameRate: 20
     });
 
-    // Interface : Vie
+    // CAPE ROUGE --------------------
+
     this.anims.create({
-        key: 'Vie4',
-        frames: [ { key: 'Vie', frame: 0 } ],
-        frameRate: 20
-    });
-    this.anims.create({
-        key: 'Vie3',
-        frames: [ { key: 'Vie', frame: 1 } ],
-        frameRate: 20
-    });
-    this.anims.create({
-        key: 'Vie2',
-        frames: [ { key: 'Vie', frame: 2 } ],
-        frameRate: 20
-    });
-    this.anims.create({
-        key: 'Vie1',
-        frames: [ { key: 'Vie', frame: 3 } ],
-        frameRate: 20
-    });
-    this.anims.create({
-        key: 'Vie0',
-        frames: [ { key: 'Vie', frame: 4 } ],
+        key: 'normalCapeR',
+        frames: [ { key: 'HerosCapeR', frame: 8 } ],
         frameRate: 20
     });
 
-    this.life = 4;
+    this.anims.create({
+        key: 'rightCapeR',
+        frames: this.anims.generateFrameNumbers('HerosCapeR', { start: 9, end: 14 }),
+        frameRate: 8,
+        repeat: 1
+    });
+
+    this.anims.create({
+        key: 'leftCapeR',
+        frames: this.anims.generateFrameNumbers('HerosCapeR', { start: 2, end: 7 }),
+        frameRate: 8,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'rightjumpCapeR',
+        frames: [ { key: 'HerosCapeR', frame: 15 } ],
+        frameRate: 3,
+    });
+
+    this.anims.create({
+        key: 'leftjumpCapeR',
+        frames: [ { key: 'HerosCapeR', frame: 1 } ],
+        frameRate: 3,
+    });
+
+    this.anims.create({
+        key: 'jumpCapeR',
+        frames: [ { key : 'HerosCapeR', frame: 15 }],
+        framerate: 3,
+    });
+
+    // Animations d'attaques
+    this.anims.create({
+        key: 'AttackRightCapeR',
+        frames: [ { key: 'HerosCapeR', frame: 16 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'AttackLeftCapeR',
+        frames: [ { key: 'HerosCapeR', frame: 0 } ],
+        frameRate: 20
+    });
+
+    // ANIMATIONS ENNEMIS
+    // Poulet
+    this.anims.create({
+        key: 'NormalChicken',
+        frames: [ { key: 'Chicken', frame: 1 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'JumpChicken',
+        frames: [ { key: 'Chicken', frame: 0 } ],
+        frameRate: 20
+    });
+
+    // Slime
+
+    this.anims.create({
+        key: 'LeftSlime',
+        frames: this.anims.generateFrameNumbers('Slime', { start: 0, end: 2 }),
+        frameRate: 8,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'RightSlime',
+        frames: this.anims.generateFrameNumbers('Slime', { start: 3, end: 5 }),
+        frameRate: 8,
+        repeat: 1
+    });
+
+    //Piaf
+    this.anims.create({
+        key: 'LeftBird',
+        frames: this.anims.generateFrameNumbers('Bird', { start: 0, end: 2 }),
+        frameRate: 8,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'RightBird',
+        frames: this.anims.generateFrameNumbers('Bird', { start: 3, end: 5 }),
+        frameRate: 8,
+        repeat: 1
+    });
+    
+    // Interface : Vie
+    this.anims.create({
+        key: 'Hp4',
+        frames: [ { key: 'Life', frame: 0 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Hp3',
+        frames: [ { key: 'Life', frame: 1 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Hp2',
+        frames: [ { key: 'Life', frame: 2 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Hp1',
+        frames: [ { key: 'Life', frame: 3 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'Hp0',
+        frames: [ { key: 'Life', frame: 4 } ],
+        frameRate: 20
+    });
 
     // Interface : Pierres Lune
     this.anims.create({
@@ -460,7 +724,7 @@ function create (){
     });
 
     this.RSInventory = 0;
-
+    
     // Porte fin de niveau
     this.anims.create({
         key: 'DoorClose',
@@ -489,23 +753,28 @@ function create (){
     });
     */
 
-    //  The score
-    scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
-
-    //  Collide the .player and the stars with the platforms
-    this.physics.add.collider(player, platforms);
-
-    //  Checks to see if the .player overlaps with any of the stars, if he does call the collectStar function
-
     // Camera
     this.cameras.main.startFollow(player)
 	this.cameras.main.setBounds(0,0,Map.widthInPixels, Map.heightInPixels);
     this.physics.world.setBounds(0,0, Map.widthInPixels, Map.heightInPixels);
 	player.setCollideWorldBounds(true);
 
-    // Création des collisions
+    // CRATION DES COLLISIONS
+    // avec la map
     groundLayer.setCollisionByProperty({ Collisions: true });
     this.physics.add.collider(player, groundLayer);
+    this.physics.add.collider(chicken, groundLayer);
+    this.physics.add.collider(chicken2, groundLayer);
+    this.physics.add.collider(chicken3, groundLayer);
+    this.physics.add.collider(slime, groundLayer);
+    this.physics.add.collider(slime2, groundLayer);
+    this.physics.add.collider(door, groundLayer);
+    this.physics.add.collider(door2, groundLayer);
+    this.physics.add.collider(door3, groundLayer);
+    this.physics.add.collider(sale, groundLayer);
+    this.physics.add.collider(player, movingPlatform);
+    this.physics.add.collider(player, movingPlatform2);
+    //this.physics.add.collider(player, water);
 
 }
 
@@ -518,13 +787,12 @@ function update (t, dt){
         return;
     }
 
-    this.coeur.anims.play('Vie4',true)
+    this.hp.anims.play('Hp4',true)
 
     const touchingDown = player.body.blocked.down
     player.direction = 'right';
 
-    // Déplacements du personnage
-
+    // DEPLECEMENTS DU PERSONNAGE --------------------
     // Activer le boost
     if (keyE.isDown && MSInventory > 0 && test){
         test = false
@@ -544,24 +812,38 @@ function update (t, dt){
     // Déplacements latéraux
     if (this.cursors.left.isDown && touchingDown)
     {
-        player.direction = 'left';
-        player.setVelocityX(-speed);
 
-        player.anims.play('left', true);
+        player.direction = 'left';
+        player.setVelocityX(-600);
+
+        if (CapeR){
+            player.anims.play('leftCapeR', true);
+        }    
+
+        else{
+            player.anims.play('left', true);
+        }
+        
     }
     else if (this.cursors.right.isDown && touchingDown)
     {
         player.direction = 'right';
-        player.setVelocityX(speed);
+        player.setVelocityX(600);
 
-        player.anims.play('right', true);
+        if (CapeR){
+            player.anims.play('rightCapeR', true);
+        }    
+
+        else{
+            player.anims.play('right', true);
+        }
     }
 
     else {
 
     // Saut
     if ((touchingDown || this.jumpCount < 2) && (this.cursors.up.isDown) && this.test) {
-        player.setVelocityY(-speed*2);
+        player.setVelocityY(-300*2);
             
         this.test = false;
         this.jumpCount++;
@@ -575,14 +857,26 @@ function update (t, dt){
 
     if (this.cursors.right.isDown && !touchingDown)
     {
-        player.setVelocityX(speed);
-        player.anims.play('rightjump', true);
+        player.setVelocityX(600);
+        if (CapeR){
+            player.anims.play('rightjumpCapeR', true);
+        }    
+
+        else{
+            player.anims.play('rightjump', true);
+        }
     }
 
     else if (this.cursors.left.isDown && !touchingDown)
     {
-    	player.setVelocityX(-speed);
-    	player.anims.play('leftjump', true);
+    	player.setVelocityX(-600);
+    	if (CapeR){
+            player.anims.play('leftjumpCapeR', true);
+        }    
+
+        else{
+            player.anims.play('leftjump', true);
+        }
     }
 
     // Position classique
@@ -590,7 +884,13 @@ function update (t, dt){
     {
         player.setVelocityX(0);
 
-        player.anims.play('normal');
+        if (CapeR){
+            player.anims.play('normalCapeR', true);
+        }    
+
+        else{
+            player.anims.play('normal', true);
+        }
     }
 
     }
@@ -623,14 +923,41 @@ function update (t, dt){
         this.jumpCount = 1
     }
 
-    // Porte
-    this.door.anims.play('DoorClose', true)
+    // DEPLACEMENTS ENNEMIES --------------------
+    // Poulet
+
+    if (this.cursors.up.isDown && touchingDown && pouletSol){
+        pouletSol = false;
+        chicken.setVelocityY(-400);
+        chicken2.setVelocityY(-400);
+        chicken3.setVelocityY(-400);
+
+        this.time.addEvent({ delay : 1300, callback: function(){pouletSol = true}, callbackScope: this});
+    }
+    
+    /* Slime
+    if (slime.x >= 600)
+    {
+        slime.setVelocityX(-25);
+        slime.anims.play('LeftSlime', true);
+    }
+    else if (slime.x <= 500)
+    {
+        slime.setVelocityX(25);
+        slime.anims.play('RightSlime', true);
+    }
+    */
+    //Piaf
+        //bird.anims.play('LeftBird', true)
+
+    /* Porte
+    door.anims.play('DoorClose', true);
 
     if (KeyInventory == 3)
     {
-        this.door.anims.play('DoorOpen', true)
+        door.anims.play('DoorOpen', true);
     }
-        
+        */
     // Interface : Clé
     this.key1.anims.play('KeyP1.0', true);
     this.key2.anims.play('KeyP2.0', true);
@@ -680,6 +1007,43 @@ function update (t, dt){
         this.monney.anims.play('RSI4', true);
     }
 
+    // Interface : Vie
+    
+    if (Hp == 4){
+        this.hp.anims.play('Hp4', true);
+    }
+    else if (Hp == 3){
+        this.hp.anims.play('Hp3', true);
+    }
+    else if (Hp == 2){
+        this.hp.anims.play('Hp2', true);
+    }
+    else if (Hp == 1){
+        this.hp.anims.play('Hp1', true);
+    }
+    else if (Hp == 0){
+        this.hp.anims.play('Hp0', true);
+    }
+
+    // Plateforme mobile 1
+    if (movingPlatform.x >= 2750)
+    {
+        movingPlatform.setVelocityX(-100);
+    }
+    else if (movingPlatform.x <= 2400)
+    {
+        movingPlatform.setVelocityX(100);
+    }
+
+    // Plateforme mobile 2
+    if (movingPlatform2.x >= 4000)
+    {
+        movingPlatform2.setVelocityX(-100);
+    }
+    else if (movingPlatform2.x <= 3700)
+    {
+        movingPlatform2.setVelocityX(100);
+    }
 }
 
 function attaquer(player)
@@ -697,7 +1061,12 @@ function attaquer(player)
     if (left == true) {sword.setFlipX(true)}
       
 }
-
+/*
+function touchWater (player, water)
+{
+    Hp == 0
+}
+*/
 function collectKey (player, cle)
 {
     cle.destroy();
@@ -709,8 +1078,8 @@ function collectKey (player, cle)
     
 }
 
-function collectMoonStone (player, MoonStone){
-
+function collectMoonStone (player, MoonStone)
+{
     MoonStone.destroy();
     MSInventory += 1;
 
@@ -721,34 +1090,53 @@ function collectMoonStone (player, MoonStone){
 
 }
 
-function collectRedStone (player, RedStone){
-
+function collectRedStone (player, RedStone)
+{
     RedStone.destroy();
     RSInventory += 1;
 
 }
 
-function hitBomb (player, bomb)
+function heal (player, Potion)
 {
-    this.coeur.anims.play('Vie4',false)
-    this.life -= 1
-    if (this.life == 3){
-        this.coeur.anims.play('Vie3',true)
+    if (Hp < 4){
+    Potion.destroy();
+    Hp += 1;
     }
-    if (this.life == 2){
-        this.coeur.anims.play('Vie3',false)
-        this.coeur.anims.play('Vie2',true)
+
+}
+
+function NextStage (player, door, door2, door3)
+{
+    if (KeyInventory = 3){
+        KeyInventory = 0;
     }
-    if (this.life == 1){
-        this.coeur.anims.play('Vie2',false)
-        this.coeur.anims.play('Vie1',true)
+}
+
+function AchatCapeR (player, sale)
+{
+    if (keyB.isDown && RSInventory >= 3)
+    {
+        CapeR = true;
+        RSInventory -= 3
     }
-    if (this.life == 0){
-        this.coeur.anims.play('Vie1',false)
-        this.coeur.anims.play('Vie0',true)
-        gameOver = true;
+}
+
+function hit (player, chicken, chicken2, chicken3, slime, slime2, bird, bird2, bat)
+{
+    if (!immune){
+        Hp -= 1
+        immune = true
+        this.time.addEvent({ delay : 1000, callback: function(){immune = false}, callbackScope: this});
     }
-  
+
+    else if ( Hp == 0){
+
+        this.add.image(448,224,'GameOver').setDepth(6).setScrollFactor(0);
+    }
+    const cam = this.cameras.main;
+    cam.shake(50, 0.02);
+
 }
 
 </script>
