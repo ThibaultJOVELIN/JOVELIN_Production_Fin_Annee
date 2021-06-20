@@ -2,7 +2,7 @@
 <html lang="en"> 
 <head> 
     <meta charset="UTF-8" />
-    <title>Titre</title>
+    <title>Ascent</title>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.50.1/dist/phaser.js"></script>
     <style type="text/css">
         body {
@@ -190,7 +190,9 @@ function create (){
 
     // Création des touches
     this.cursors = this.input.keyboard.createCursorKeys();
+
     keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    game.input.mouse.capture = true;
     keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     keyB = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
 
@@ -768,7 +770,6 @@ function create (){
 	player.setCollideWorldBounds(true);
 
     // CRATION DES COLLISIONS
-    // avec la map
     groundLayer.setCollisionByProperty({ Collisions: true });
     this.physics.add.collider(player, groundLayer);
     this.physics.add.collider(chicken, groundLayer);
@@ -782,7 +783,6 @@ function create (){
     this.physics.add.collider(sale, groundLayer);
     this.physics.add.collider(player, movingPlatform);
     this.physics.add.collider(player, movingPlatform2);
-    //this.physics.add.collider(player, water);
 
 }
 
@@ -1069,12 +1069,7 @@ function attaquer(player)
     if (left == true) {sword.setFlipX(true)}
       
 }
-/*
-function touchWater (player, water)
-{
-    Hp == 0
-}
-*/
+
 function collectKey (player, cle)
 {
     cle.destroy();
@@ -1082,8 +1077,7 @@ function collectKey (player, cle)
 
     if (KeyInventory == 3){
         unlock = true;
-    }
-    
+    }   
 }
 
 function collectMoonStone (player, MoonStone)
