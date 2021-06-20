@@ -22,7 +22,7 @@ var config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 550 },
-            debug: true
+            debug: false
         }
     },
     scene: {
@@ -46,19 +46,6 @@ var keyB;
 this.jumpCount = 0;
 this.test = true;
 
-// ITEMS
-// Clé
-var KeyPart1
-var KeyPart2
-var KeyPart3
-
-// Pierres
-var MoonStone
-var RedStone
-
-// Objectif
-var door
-
 var game = new Phaser.Game(config);
 
 //-------------------- FONCTION PRELOAD --------------------//
@@ -71,7 +58,9 @@ function preload ()
     this.load.tilemapTiledJSON('Map', 'Map.json');
 
     this.load.image('Platform', 'assets/Plateforme.png');
-    this.load.image('Water', 'assets/Water.png');
+    this.load.image('Water6', 'assets/Eau6x32px.png');
+    this.load.image('Water10', 'assets/Eau10x32px.png');
+    this.load.image('Water18', 'assets/Eau18x32px.png');
 
     //Background
     this.load.image('Background1', 'assets/Background_Foret.png');
@@ -91,6 +80,7 @@ function preload ()
 
     // Elements de jeu et items
     this.load.spritesheet('Door', 'assets/Porte.png', { frameWidth: 64, frameHeight: 96});
+    this.load.image('DoorO', 'assets/PorteOuverte.png');
     this.load.image('KeyP1Item', 'assets/Cle_Partie1_Item.png');
     this.load.image('KeyP2Item', 'assets/Cle_Partie2_Item.png');
     this.load.image('KeyP3Item', 'assets/Cle_Partie3_Item.png');
@@ -116,7 +106,12 @@ function preload ()
     this.load.spritesheet('KeyPart3', 'assets/Cle_Partie_3.png', { frameWidth: 60, frameHeight: 41});
 
     this.load.image('GameOver', 'assets/Ecran_GameOver.png');
-    
+    this.load.image('EcranV0', 'assets/Ecran_Victoire0.png');
+    this.load.image('EcranV1', 'assets/Ecran_Victoire1.png');
+    this.load.image('EcranV2', 'assets/Ecran_Victoire2.png');
+    this.load.image('EcranV3', 'assets/Ecran_Victoire3.png');
+    this.load.image('EcranV4', 'assets/Ecran_Victoire4.png');
+
 }
 
 //-------------------- FONCTION CREATE --------------------//
@@ -130,14 +125,16 @@ function create (){
     KeyInventory = 0;
     MSInventory = 0;
     RSInventory = 0;
+    RSfinal = 0;
     Hp = 4;
     test = true;
     speed = 190;
 
-    
+    // CREATION DU PERSNNAGE
+    player = this.physics.add.sprite(180,1309, 'Heros');   //180,1309
+    sword = this.physics.add.group();
 
     // CREATION DE LA CARTE
-
     let Map = this.make.tilemap({ key: 'Map' });
     let Tileset = Map.addTilesetImage('Tuiles', 'Tiles');
 
@@ -151,7 +148,6 @@ function create (){
     this.Lights = Map.createLayer('Lights', Tileset, 0, 0).setDepth(5);
 
     // Plateformes mobiles
-
     movingPlatform = this.physics.add.image(2550, 960, 'Platform');
     movingPlatform2 = this.physics.add.image(4500, 800, 'Platform');
 
@@ -163,12 +159,25 @@ function create (){
 
     movingPlatform.setVelocityX(-100);
     movingPlatform2.setVelocityX(-100);
-    /*
+
     // Eau
-    water = this.physics.add.group();
-    water.create(600, 1200, 'Water');
-    this.physics.add.overlap(player, water, null,this);
-    */
+    water6 = this.physics.add.group({allowGravity: false,immovable: true});
+    water6.create(7360, 1455, 'Water6').setDepth(1);
+    this.physics.add.overlap(player, water6, OSwater, null,this);
+
+    water101 = this.physics.add.group({allowGravity: false,immovable: true});
+    water101.create(7744, 1455, 'Water10').setDepth(1);
+    this.physics.add.overlap(player, water101, OSwater, null,this);
+
+    water102 = this.physics.add.group({allowGravity: false,immovable: true});
+    water102.create(7744, 466, 'Water10').setDepth(1);
+    this.physics.add.overlap(player, water102, OSwater, null,this);
+
+    water18 = this.physics.add.group({allowGravity: false,immovable: true});
+    water18.create(8480, 1455, 'Water18').setDepth(1);
+    this.physics.add.overlap(player, water18, OSwater, null,this);
+    
+
     // Création du background
     this.add.image(2300,650,'Background1').setDepth(-4).setScrollFactor(0.95);
     this.add.image(2300,640,'Background2').setDepth(-5).setScrollFactor(0.85);
@@ -196,29 +205,28 @@ function create (){
         this.key1 = this.add.sprite(145,86,'KeyPart1').setScrollFactor(0).setDepth(6);
         this.key2 = this.add.sprite(153,46,'KeyPart2').setScrollFactor(0).setDepth(6);
         this.key3 = this.add.sprite(206,58,'KeyPart3').setScrollFactor(0).setDepth(6);
-
-    // Création du personnage
-    player = this.physics.add.sprite(4110,1373, 'Heros');   //180,1309
-    sword = this.physics.add.group();
     
     // Création Objectifs
     door = this.physics.add.group();
-    door.create(2800,1264,'Door').setDepth(0);
-    this.physics.add.overlap(player, door, NextStage, null,this);
+    door.create(2800,1264,'Door').setDepth(-1);
+    this.physics.add.overlap(player, door, NextStage_level2, null,this);
 
     door2 = this.physics.add.group();
-    door2.create(800, 1200, 'Door').setDepth(0);
-    this.physics.add.overlap(player, door2, NextStage, null,this);  
+    door2.create(6140, 600, 'Door').setDepth(-1);
+    this.physics.add.overlap(player, door2, NextStage_level3, null,this);  
     
     door3 = this.physics.add.group();
-    door3.create(8660,688, 'Door').setDepth(0);
-    this.physics.add.overlap(player, door3, NextStage, null,this);
+    door3.create(8660,688, 'Door').setDepth(-1);
+    this.physics.add.overlap(player, door3, NextStage_Win, null,this);
 
     this.trader = this.add.sprite(4120,1373,'Trader').setDepth(-1);
 
     sale = this.physics.add.group();
     sale.create(4200,1310, 'CapeVente').setDepth(-2);
     this.physics.add.overlap(player, sale, AchatCapeR, null,this);
+
+    this.doorO1 = this.add.sprite(3340,1365,'DoorO').setDepth(-1);
+    this.doorO2 = this.add.sprite(6560,780,'DoorO').setDepth(-1);
 
     // CREATION DES ENNEMIES --------------------
     // Poulet
@@ -814,7 +822,7 @@ function update (t, dt){
     {
 
         player.direction = 'left';
-        player.setVelocityX(-600);
+        player.setVelocityX(-speed);
 
         if (CapeR){
             player.anims.play('leftCapeR', true);
@@ -828,7 +836,7 @@ function update (t, dt){
     else if (this.cursors.right.isDown && touchingDown)
     {
         player.direction = 'right';
-        player.setVelocityX(600);
+        player.setVelocityX(speed);
 
         if (CapeR){
             player.anims.play('rightCapeR', true);
@@ -843,7 +851,7 @@ function update (t, dt){
 
     // Saut
     if ((touchingDown || this.jumpCount < 2) && (this.cursors.up.isDown) && this.test) {
-        player.setVelocityY(-300*2);
+        player.setVelocityY(-speed*2);
             
         this.test = false;
         this.jumpCount++;
@@ -857,7 +865,7 @@ function update (t, dt){
 
     if (this.cursors.right.isDown && !touchingDown)
     {
-        player.setVelocityX(600);
+        player.setVelocityX(speed);
         if (CapeR){
             player.anims.play('rightjumpCapeR', true);
         }    
@@ -869,7 +877,7 @@ function update (t, dt){
 
     else if (this.cursors.left.isDown && !touchingDown)
     {
-    	player.setVelocityX(-600);
+    	player.setVelocityX(-speed);
     	if (CapeR){
             player.anims.play('leftjumpCapeR', true);
         }    
@@ -957,7 +965,7 @@ function update (t, dt){
     {
         door.anims.play('DoorOpen', true);
     }
-        */
+    */
     // Interface : Clé
     this.key1.anims.play('KeyP1.0', true);
     this.key2.anims.play('KeyP2.0', true);
@@ -1094,6 +1102,7 @@ function collectRedStone (player, RedStone)
 {
     RedStone.destroy();
     RSInventory += 1;
+    RSfinal += 1;
 
 }
 
@@ -1106,10 +1115,48 @@ function heal (player, Potion)
 
 }
 
-function NextStage (player, door, door2, door3)
+function NextStage_level2 (player, door)
 {
-    if (KeyInventory = 3){
+    if (KeyInventory == 3){
         KeyInventory = 0;
+        player.x = this.doorO1.x
+        player.y = this.doorO1.y
+    }
+}
+
+function NextStage_level3 (player, door2)
+{
+    if (KeyInventory == 3){
+        KeyInventory = 0;
+        player.x = this.doorO2.x
+        player.y = this.doorO2.y
+    }
+}
+
+function NextStage_Win (player, door3)
+{
+    if (KeyInventory == 3){
+        KeyInventory = 0;
+
+        if (RSfinal == 0){
+            this.add.image(448,224,'EcranV0').setDepth(6).setScrollFactor(0);
+        }
+
+        else if (RSfinal == 1){
+            this.add.image(448,224,'EcranV1').setDepth(6).setScrollFactor(0);
+        }
+
+        else if (RSfinal == 2){
+            this.add.image(448,224,'EcranV2').setDepth(6).setScrollFactor(0);
+        }
+
+        else if (RSfinal == 3){
+            this.add.image(448,224,'EcranV3').setDepth(6).setScrollFactor(0);
+        }
+
+        else if (RSfinal == 4){
+            this.add.image(448,224,'EcranV4').setDepth(6).setScrollFactor(0);
+        }
     }
 }
 
@@ -1134,6 +1181,16 @@ function hit (player, chicken, chicken2, chicken3, slime, slime2, bird, bird2, b
 
         this.add.image(448,224,'GameOver').setDepth(6).setScrollFactor(0);
     }
+    const cam = this.cameras.main;
+    cam.shake(50, 0.02);
+
+}
+
+function OSwater (player, water6, water101, water102, water18)
+{
+    player.x = this.doorO2.x
+    player.y = this.doorO2.y
+
     const cam = this.cameras.main;
     cam.shake(50, 0.02);
 
