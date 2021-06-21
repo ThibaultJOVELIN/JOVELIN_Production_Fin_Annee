@@ -69,7 +69,6 @@ function preload ()
     // Personnage
     this.load.spritesheet('Heros', 'assets/PersonnageAnimationPNG.png', { frameWidth: 49, frameHeight: 71 });
     this.load.spritesheet('HerosCapeR', 'assets/PersonnageAnimationPNGCapeRouge.png', { frameWidth: 49, frameHeight: 71 });
-    this.load.image('sword', 'assets/Sword.png');
 
     //Ennemies
     this.load.spritesheet('Chicken', 'assets/Poulet_Spritesheet.png', { frameWidth: 42, frameHeight: 47 });
@@ -1057,6 +1056,8 @@ function update (t, dt){
         movingPlatform2.setVelocityX(100);
     }
 }
+
+// L'attaque ne fonctionne pas
 
 function attaquer(player)
 {
