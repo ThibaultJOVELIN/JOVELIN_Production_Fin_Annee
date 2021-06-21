@@ -21,7 +21,7 @@ var config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 550 },
+            gravity: { y: 610 },
             debug: false
         }
     },
@@ -37,7 +37,6 @@ var sword
 var platforms;
 var movingPlatform
 var movingPlatform2
-var slime
 var cursors;
 var gameOver = false;
 var keyA;
@@ -70,7 +69,7 @@ function preload ()
     // Personnage
     this.load.spritesheet('Heros', 'assets/PersonnageAnimationPNG.png', { frameWidth: 49, frameHeight: 71 });
     this.load.spritesheet('HerosCapeR', 'assets/PersonnageAnimationPNGCapeRouge.png', { frameWidth: 49, frameHeight: 71 });
-    // this.load.image('sword', 'assets/Sword.png');
+    this.load.image('sword', 'assets/Sword.png');
 
     //Ennemies
     this.load.spritesheet('Chicken', 'assets/Poulet_Spritesheet.png', { frameWidth: 42, frameHeight: 47 });
@@ -117,17 +116,19 @@ function preload ()
 //-------------------- FONCTION CREATE --------------------//
 
 function create (){
+
     BoostActivated = false;
     immune = false;
     unlock = false;
     pouletSol = true;
     CapeR = false;
+    test = true;
+
     KeyInventory = 0;
     MSInventory = 0;
     RSInventory = 0;
     RSfinal = 0;
     Hp = 4;
-    test = true;
     speed = 190;
 
     // CREATION DU PERSNNAGE
@@ -176,7 +177,6 @@ function create (){
     water18 = this.physics.add.group({allowGravity: false,immovable: true});
     water18.create(8480, 1455, 'Water18').setDepth(1);
     this.physics.add.overlap(player, water18, OSwater, null,this);
-    
 
     // Création du background
     this.add.image(2300,650,'Background1').setDepth(-4).setScrollFactor(0.95);
@@ -230,7 +230,10 @@ function create (){
     this.doorO1 = this.add.sprite(3340,1365,'DoorO').setDepth(-1);
     this.doorO2 = this.add.sprite(6560,780,'DoorO').setDepth(-1);
 
+
     // CREATION DES ENNEMIES --------------------
+
+
     // Poulet
     // 1
     chicken = this.physics.add.group();
@@ -299,7 +302,6 @@ function create (){
     this.physics.add.overlap(player, slime2, hit, null,this);
 
     //Chauve-souris
-
     bat = this.physics.add.group({allowGravity: false,immovable: true});
     bat.create(8900,940, 'Bat').setDepth(0);
 
@@ -318,14 +320,17 @@ function create (){
 
     this.physics.add.overlap(player, bat, hit, null,this);
 
+
     // ITEMS -------------------
+
+
     // Création des fragments de clé
     keys = this.physics.add.group({allowGravity: false,immovable: true});
 
     //Level1
     keys.create(1070, 990, 'KeyPart1').setDepth(0);
     keys.create(1800, 930, 'KeyPart2').setDepth(0);
-    keys.create(2500, 1213, 'KeyPart3').setDepth(0);
+    keys.create(2970, 860, 'KeyPart3').setDepth(0);
 
     //Level2
     keys.create(3340, 890, 'KeyPart1').setDepth(0);
@@ -340,21 +345,19 @@ function create (){
     this.physics.add.overlap(player, keys, collectKey, null,this);
 
     // Création de pierres de connexion
-
     MoonStone = this.physics.add.group({allowGravity: false,immovable: true});
 
     MoonStone.create(1600, 1210, 'MoonStone').setDepth(0);
-    MoonStone.create(3410, 890, 'MoonStone').setDepth(0);
+    MoonStone.create(4630, 1280, 'MoonStone').setDepth(0);
     MoonStone.create(7555, 1310, 'MoonStone').setDepth(0);
     MoonStone.create(7280, 220, 'MoonStone').setDepth(0);
 
     this.physics.add.overlap(player, MoonStone, collectMoonStone, null,this);
 
     // Création de pierres précieuses
-
     RedStone = this.physics.add.group({allowGravity: false,immovable: true});
 
-    RedStone.create(2970, 860, 'RedStone').setDepth(0);
+    RedStone.create(2030, 930, 'RedStone').setDepth(0);
     RedStone.create(3920, 1150, 'RedStone').setDepth(0);
     RedStone.create(4300, 700, 'RedStone').setDepth(0);
     RedStone.create(6720, 1310, 'RedStone').setDepth(0);
@@ -786,7 +789,9 @@ function create (){
 
 }
 
+
 //-------------------- FONCTION UPDATE --------------------//
+
 
 function update (t, dt){
 
@@ -800,7 +805,10 @@ function update (t, dt){
     const touchingDown = player.body.blocked.down
     player.direction = 'right';
 
+
     // DEPLECEMENTS DU PERSONNAGE --------------------
+
+
     // Activer le boost
     if (keyE.isDown && MSInventory > 0 && test){
         test = false
@@ -852,12 +860,16 @@ function update (t, dt){
     // Saut
     if ((touchingDown || this.jumpCount < 2) && (this.cursors.up.isDown) && this.test) {
         player.setVelocityY(-speed*2);
+        player.anims.play('jump')
             
         this.test = false;
         this.jumpCount++;
 
         console.log(this.jumpCount)
     }
+
+    if (!touchingDown)
+        player.anims.play('jump')
 
     if (this.cursors.up.isUp){
         this.test = true ; 
@@ -931,7 +943,10 @@ function update (t, dt){
         this.jumpCount = 1
     }
 
+
     // DEPLACEMENTS ENNEMIES --------------------
+
+
     // Poulet
 
     if (this.cursors.up.isDown && touchingDown && pouletSol){
@@ -943,18 +958,7 @@ function update (t, dt){
         this.time.addEvent({ delay : 1300, callback: function(){pouletSol = true}, callbackScope: this});
     }
     
-    /* Slime
-    if (slime.x >= 600)
-    {
-        slime.setVelocityX(-25);
-        slime.anims.play('LeftSlime', true);
-    }
-    else if (slime.x <= 500)
-    {
-        slime.setVelocityX(25);
-        slime.anims.play('RightSlime', true);
-    }
-    */
+    
     //Piaf
         //bird.anims.play('LeftBird', true)
 
